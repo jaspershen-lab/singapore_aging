@@ -4,6 +4,8 @@ library(tidyverse)
 
 setwd(r4projects::get_project_wd())
 
+source("1-code/100-tools.R")
+
 # Read in data
 data <- readxl::read_xlsx("2-data/singapore_population_age_percentage.xlsx")
 

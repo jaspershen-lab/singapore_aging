@@ -4,11 +4,15 @@ library(tidyverse)
 
 setwd(r4projects::get_project_wd())
 
+source("1-code/100-tools.R")
+
 # Read data
 ###data1 is historical data, and data 2 is predicted data
 data1 <- readr::read_csv("2-data/age_structure_data_historical.csv")
 data2 <- readr::read_csv("2-data/age_structure_data_predicted.csv")
 
+dir.create("3-data_analysis/4-population_age_percentage", showWarnings = FALSE)
+setwd("3-data_analysis/4-population_age_percentage")
 data1$`Reference area`[data1$`Reference area` == "China (People’s Republic of)"] <- "China"
 
 data1 <-
@@ -64,7 +68,30 @@ data1 %>%
     ggplot(aes(Time, rate)) +
     geom_bar(stat = "identity", aes(fill = Age_range)) +
     theme_bw() +
-    facet_wrap(~Country, ncol = 3)
+    facet_wrap(~Country, ncol = 3)  +
+    scale_fill_manual(values = age_range_color) 
+
+plot <-
+data1 %>%
+dplyr::filter(Country == "Singapore")  %>%
+    dplyr::mutate(Age_range = factor(Age_range, levels = c("Over 65", "20-64", "0-19"))) %>%
+    ggplot(aes(Time, rate)) +
+    geom_bar(stat = "identity", aes(fill = Age_range),
+    show.legend = FALSE) +
+    theme_bw() +
+    scale_fill_manual(values = age_range_color) +
+    scale_x_continuous(expand = expansion(0, 0),
+    breaks = seq(1950, 2020, 5),
+  labels = seq(1950, 2020, 5)) +
+    scale_y_continuous(expand = expansion(0, 0)) +
+      theme(panel.grid = element_blank(),
+    axis.text.x = element_text(angle = 45,  hjust = 1, vjust = 1)) +
+  labs(x = "", y = "Percentage of population (%)")
+plot
+
+ggsave(plot, filename = "singapore_age_structure.pdf",
+width = 6, height = 6, units = "in")
+
 
 # This code filters the 'data1' dataframe to include only the rows where the 'Age_range' column is "Over 65".
 # It then creates a line plot using ggplot, where the x-axis represents the 'Time' column and the y-axis represents the 'rate' column.
@@ -145,11 +172,57 @@ data2  %>%
     geom_point(aes(color = Country)) +
     geom_line(aes(group = Country, color = Country))
 
-rbind(data1, data2)  %>% 
+
+data <-
+rbind(mutate(data1, class = "historical"),
+      mutate(data2, class = "predicted")) 
+
+data
+
+library(plyr)
+data  %>% 
 dplyr::filter(Age_range == "Over 65")  %>% 
-dplyr::filter(Country == "Singapore")  %>%
-ggplot(aes(Time, rate)) +
-geom_point(aes(color = Country)) +
-geom_line(aes(group = Country,
-color = Country)) +
-theme_bw()
+plyr::dlply(.(Country))  %>% 
+purrr::map(function(x){
+    idx <- c(which.min(abs(x$rate - 7)),
+    which.min(abs(x$rate - 20)))
+    x[idx,]
+})
+
+plot <-
+data %>%
+    dplyr::filter(Age_range == "Over 65") %>%
+    dplyr::filter(Country %in% c("Singapore", "Germany", "Japan", "United States")) %>%
+    ggplot(aes(Time, rate)) +
+    geom_line(aes(group = interaction(Country, class), linetype = class, color = Country)) +
+    scale_linetype_manual(values = c("historical" = "solid", "predicted" = "dashed")) +
+    scale_color_manual(values = country_color) +
+    theme_bw() +
+      theme(panel.grid = element_blank(),
+    axis.text.x = element_text(angle = 45,  hjust = 1, vjust = 1),
+    legend.position = c(0, 1),
+          legend.justification = c(0, 1)) +
+  scale_x_continuous(breaks = seq(1950, 2060, 5),
+  labels = seq(1950, 2060, 5))  +
+  labs(x = "",
+  y = "Percentage of population aged 65 and over (%)")
+
+
+####add united states
+ plot <-
+ plot +
+ geom_vline(xintercept = c(1950, 2024), 
+ color = country_color["United States"]) +
+ geom_vline(xintercept = c(1993, 2024),
+ color = country_color["Singapore"]) +
+ geom_vline(xintercept = c(1950, 2005),
+ color = country_color["Germany"]) +
+ geom_vline(xintercept = c(1966, 2002),
+ color = country_color["Japan"])
+
+
+plot
+
+ggsave(plot, filename = "population_age_percentage.pdf",
+width = 10, height = 6, units = "in")
+
