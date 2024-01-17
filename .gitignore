@@ -2,3 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
+
+
+###ignore all the .ai format files in 3-data_analysis folder
+3-data_analysis/*.ai
