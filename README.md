@@ -6,11 +6,13 @@ Feel free to browse through the contents of this repository and contribute to th
 
 ## Table of Contents
 
-- [Background](#background)
-- [Data Sources](#data-sources)
-- [Analysis](#analysis)
-- [Contributing](#contributing)
-- [License](#license)
+- [Singapore Aging](#singapore-aging)
+  - [Table of Contents](#table-of-contents)
+  - [Background](#background)
+  - [Data Sources](#data-sources)
+  - [Analysis](#analysis)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Background
 
